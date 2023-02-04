@@ -103,7 +103,7 @@ public final class Constants {
             public static final int kDriveMotorID = 1;
             public static final int kAngleMotorID = 2;
             public static final int kEncoderID = 0;
-            public static final double kAngleOffset = 6.277663;
+            public static final Rotation2d kAngleOffset = Rotation2d.fromRotations(0.5 + 0.5);
             public static final SwerveModuleConstants kConstants = 
                 new SwerveModuleConstants(kDriveMotorID, kAngleMotorID, kEncoderID, kAngleOffset);
         }
@@ -112,7 +112,7 @@ public final class Constants {
             public static final int kDriveMotorID = 3;
             public static final int kAngleMotorID = 4;
             public static final int kEncoderID = 1;
-            public static final double kAngleOffset = 3.090590;
+            public static final Rotation2d kAngleOffset = Rotation2d.fromRotations(0.04 + 0.5);
             public static final SwerveModuleConstants kConstants = 
                 new SwerveModuleConstants(kDriveMotorID, kAngleMotorID, kEncoderID, kAngleOffset);
         }
@@ -121,7 +121,7 @@ public final class Constants {
             public static final int kDriveMotorID = 5;
             public static final int kAngleMotorID = 6;
             public static final int kEncoderID = 2;
-            public static final double kAngleOffset = 6.111399;
+            public static final Rotation2d kAngleOffset = Rotation2d.fromRotations(0.658 + 0.5);
             public static final SwerveModuleConstants kConstants = 
                 new SwerveModuleConstants(kDriveMotorID, kAngleMotorID, kEncoderID, kAngleOffset);
         }
@@ -130,7 +130,7 @@ public final class Constants {
             public static final int kDriveMotorID = 7;
             public static final int kAngleMotorID = 8;
             public static final int kEncoderID = 3;
-            public static final double kAngleOffset = 1.266737;
+            public static final Rotation2d kAngleOffset = Rotation2d.fromRotations(0.3 + 0.5);
             public static final SwerveModuleConstants kConstants = 
                 new SwerveModuleConstants(kDriveMotorID, kAngleMotorID, kEncoderID, kAngleOffset);
         }
@@ -146,9 +146,9 @@ public final class Constants {
             public final int driveMotorID;
             public final int angleMotorID;
             public final int encoderID;
-            public final double angleOffset;
+            public final Rotation2d angleOffset;
 
-            public SwerveModuleConstants(int d, int a, int e, double o) {
+            public SwerveModuleConstants(int d, int a, int e, Rotation2d o) {
                 driveMotorID = d;
                 angleMotorID = a;
                 encoderID = e;

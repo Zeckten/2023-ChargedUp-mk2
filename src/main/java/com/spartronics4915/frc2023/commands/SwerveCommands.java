@@ -104,22 +104,27 @@ public class SwerveCommands {
 
         @Override
         public void execute() {
-            double x1 = -mController.getLeftX();
+            // System.out.println("teleop");
+            double x1 = mController.getLeftX();
             double y1 = mController.getLeftY();
-            double x2 = -mController.getRightX();
-
+            double x2 = mController.getRightX();
+            
+            // System.out.println("x1,y1,x2:" + x1 + "," + y1 + "," + x2);
             x1 = applyTransformations(x1);
             y1 = applyTransformations(y1);
             x2 = applyTransformations(x2);
+            // System.out.println("x1,y1,x2:" + x1 + "," + y1 + "," + x2);
 
             Translation2d translation = new Translation2d(-y1, -x1).times(kMaxSpeed);
             double rotation = -x2 * kMaxAngularSpeed;
+            // System.out.println("translation,rotation" + translation + "," + rotation);
 
             if (Math.abs(mController.getRawAxis(kSlowModeAxis)) <= kTriggerDeadband) { // <= for slow mode default
                 translation = translation.times(kSlowModeSpeedMultiplier);
                 rotation *= kSlowModeAngularSpeedMultiplier;
             }
             
+            // System.out.println("translation,rotation" + translation + "," + rotation);
             mSwerve.drive(translation, rotation, true);
         }
 
