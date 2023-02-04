@@ -82,10 +82,10 @@ public final class DebugTeleopCommands {
         SwerveTab(Swerve swerve, SwerveCommands swerveCommands) {
             mSwerveCommands = swerveCommands;
             tab = Shuffleboard.getTab("Swerve");
-            // module0 = new SwerveModuleWidget(tab, "Module 0");
-            // module1 = new SwerveModuleWidget(tab, "Module 1");
-            // module2 = new SwerveModuleWidget(tab, "Module 2");
-            // module3 = new SwerveModuleWidget(tab, "Module 3");
+            module0 = new SwerveModuleWidget(tab, "Module 0");
+            module1 = new SwerveModuleWidget(tab, "Module 1");
+            module2 = new SwerveModuleWidget(tab, "Module 2");
+            module3 = new SwerveModuleWidget(tab, "Module 3");
             chassisWidget = new ChassisWidget(tab);
 
             swerve_subsystem = swerve;
@@ -94,27 +94,27 @@ public final class DebugTeleopCommands {
             .withSize(2, 3)
             .withProperties(Map.of("Label position", "HIDDEN")); // hide labels for commands
             
-            // elevatorCommands.add(SimpleAutos.forceOrientation(swerve_subsystem, Rotation2d.fromDegrees(0)).withName("Orientation 0"));
-            // elevatorCommands.add(SimpleAutos.forceOrientation(swerve_subsystem, Rotation2d.fromDegrees(90)).withName("Orientation 90"));
-            // elevatorCommands.add(SimpleAutos.forceOrientation(swerve_subsystem, Rotation2d.fromDegrees(180)).withName("Orientation 180"));
-            // elevatorCommands.add(SimpleAutos.forceOrientation(swerve_subsystem, Rotation2d.fromDegrees(270)).withName("Orientation 270"));
-            // elevatorCommands.add(SimpleAutos.forceOrientation(swerve_subsystem, Rotation2d.fromDegrees(360)).withName("Orientation 360"));
+            elevatorCommands.add(SimpleAutos.forceOrientation(swerve_subsystem, Rotation2d.fromDegrees(0)).withName("Orientation 0"));
+            elevatorCommands.add(SimpleAutos.forceOrientation(swerve_subsystem, Rotation2d.fromDegrees(90)).withName("Orientation 90"));
+            elevatorCommands.add(SimpleAutos.forceOrientation(swerve_subsystem, Rotation2d.fromDegrees(180)).withName("Orientation 180"));
+            elevatorCommands.add(SimpleAutos.forceOrientation(swerve_subsystem, Rotation2d.fromDegrees(270)).withName("Orientation 270"));
+            elevatorCommands.add(SimpleAutos.forceOrientation(swerve_subsystem, Rotation2d.fromDegrees(360)).withName("Orientation 360"));
             
-            // elevatorCommands.add(SimpleAutos.forceOrientation(swerve_subsystem, Rotation2d.fromDegrees(-90)).withName("Orientation -90"));
-            // elevatorCommands.add(SimpleAutos.forceOrientation(swerve_subsystem, Rotation2d.fromDegrees(-180)).withName("Orientation -180"));
-            // elevatorCommands.add(SimpleAutos.forceOrientation(swerve_subsystem, Rotation2d.fromDegrees(-270)).withName("Orientation -270"));
+            elevatorCommands.add(SimpleAutos.forceOrientation(swerve_subsystem, Rotation2d.fromDegrees(-90)).withName("Orientation -90"));
+            elevatorCommands.add(SimpleAutos.forceOrientation(swerve_subsystem, Rotation2d.fromDegrees(-180)).withName("Orientation -180"));
+            elevatorCommands.add(SimpleAutos.forceOrientation(swerve_subsystem, Rotation2d.fromDegrees(-270)).withName("Orientation -270"));
             elevatorCommands.add(Commands.runOnce(() -> swerve_subsystem.resetToAbsolute()).withName("Reset to Absolute"));
             elevatorCommands.add(mSwerveCommands.new RotateToYaw(Rotation2d.fromDegrees(45)).withName("Rotate 45"));
         }
         
         public void update(){
             
-            // var swerve_modules = swerve_subsystem.getSwerveModules();
+            var swerve_modules = swerve_subsystem.getSwerveModules();
             
-            // module0.update(swerve_modules[0]);
-            // module1.update(swerve_modules[1]);
-            // module2.update(swerve_modules[2]);
-            // module3.update(swerve_modules[3]);
+            module0.update(swerve_modules[0]);
+            module1.update(swerve_modules[1]);
+            module2.update(swerve_modules[2]);
+            module3.update(swerve_modules[3]);
 
             chassisWidget.update(swerve_subsystem);
         }

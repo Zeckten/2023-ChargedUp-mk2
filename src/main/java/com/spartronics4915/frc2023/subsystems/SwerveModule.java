@@ -28,7 +28,7 @@ public class SwerveModule {
 
     private RelativeEncoder mDriveEncoder;
     private RelativeEncoder mIntegratedAngleEncoder;
-    private CANCoder mAngleEncoder;
+    private AnalogEncoder mAngleEncoder;
 
     private final SparkMaxPIDController mDriveController;
     private final SparkMaxPIDController mAngleController;
@@ -52,7 +52,7 @@ public class SwerveModule {
         mAngleController = mAngleMotor.getPIDController();
         configureAngleMotor();
 
-        mAngleEncoder = new CANCoder(encoderID);
+        mAngleEncoder = new AnalogEncoder(new AnalogInput(encoderID));
 
         mDesiredState = new SwerveModuleState();
 
@@ -60,7 +60,7 @@ public class SwerveModule {
     }
 
     public SwerveModule(int moduleNumber, SwerveModuleConstants constants) {
-        this(moduleNumber, constants.driveMotorID, constants.angleMotorID, constants.encoderID, constants.absoluteOffset);
+        this(moduleNumber, constants.driveMotorID, constants.angleMotorID, constants.encoderID, constants.angleOffset);
     }
 
     public void forceModuleOrientation(Rotation2d newAngle, boolean isOpenLoop){
@@ -124,17 +124,17 @@ public class SwerveModule {
 
     public void resetToAbsolute() {
         Rotation2d encoderAngle = getShiftedAbsoluteEncoderRotation();
-        System.out.println(mModuleNumber + " " + getAbsoluteEncoderValue() + " " + encoderAngle.getRadians());
-        mIntegratedAngleEncoder.setPosition(encoderAngle.getRadians());
-        mDriveController.setReference(encoderAngle.getRadians(), ControlType.kPosition);
+        System.out.println(mModuleNumber + " " + getAbsoluteEncoderValue() + " " + encoderAngle.getDegrees());
+        mIntegratedAngleEncoder.setPosition(encoderAngle.getDegrees());
+        mDriveController.setReference(encoderAngle.getDegrees(), ControlType.kPosition);
     }
 
     public double getAbsoluteEncoderValue() {
-        return -mAngleEncoder.getAbsolutePosition();
+        return 1.0 - mAngleEncoder.getAbsolutePosition();
     }
 
     public Rotation2d getShiftedAbsoluteEncoderRotation() {
-        return Rotation2d.fromDegrees(getAbsoluteEncoderValue()).minus(
+        return Rotation2d.fromRotations(getAbsoluteEncoderValue()).minus(
             Rotation2d.fromRotations(mAbsoluteOffset));
     }
 
@@ -178,7 +178,7 @@ public class SwerveModule {
 
     public SwerveModuleState getState() {
         double velocity = mDriveEncoder.getVelocity();
-        Rotation2d angle = Rotation2d.fromDegrees(mAngleEncoder.getPosition());
+        Rotation2d angle = Rotation2d.fromDegrees(mIntegratedAngleEncoder.getPosition());
         return new SwerveModuleState(velocity, angle);
     }
 

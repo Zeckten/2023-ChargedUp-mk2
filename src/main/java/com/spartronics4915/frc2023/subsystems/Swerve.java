@@ -2,7 +2,7 @@ package com.spartronics4915.frc2023.subsystems;
 
 // import org.photonvision.PhotonCamera;
 
-import com.ctre.phoenix.sensors.Pigeon2;
+import com.kauailabs.navx.frc.AHRS;
 
 import edu.wpi.first.math.MatBuilder;
 import edu.wpi.first.math.Nat;
@@ -32,7 +32,7 @@ public class Swerve extends SubsystemBase {
 
     private SwerveModule[] mModules;
 
-    private Pigeon2 mIMU;
+    private AHRS mNavX;
 	private final int mModuleCount;
     // private PhotonCamera mFrontCamera;
 
@@ -48,8 +48,8 @@ public class Swerve extends SubsystemBase {
     }
 
     private Swerve() {
-        mIMU = new Pigeon2(kPigeonID);
-        configurePigeon(mIMU);
+        mNavX = new AHRS();
+        mNavX.reset();
 
         // mFrontCamera = new PhotonCamera(NetworkTableInstance.getDefault(), kFrontCameraName);
 
@@ -72,10 +72,6 @@ public class Swerve extends SubsystemBase {
             new MatBuilder<>(Nat.N3(), Nat.N1()).fill(0.1, 0.1, 0.1),
             new MatBuilder<>(Nat.N3(), Nat.N1()).fill(0.9, 0.9, 0.9)
         );
-    }
-
-    private void configurePigeon(Pigeon2 pigeon2) {
-        pigeon2.configMountPose(kPigeonMountPoseYaw, kPigeonMountPosePitch, kPigeonMountPoseRoll);
     }
 
 	public int getModuleCount() {
@@ -145,11 +141,11 @@ public class Swerve extends SubsystemBase {
     }
 
     public Rotation2d getYaw() {
-        return Rotation2d.fromDegrees(-mIMU.getYaw());
+        return Rotation2d.fromDegrees(-mNavX.getYaw());
     }
 
     public void resetYaw() {
-        mIMU.setYaw(0);
+        mNavX.reset();
     }
 
     public void resetOdometry(Pose2d pose) {

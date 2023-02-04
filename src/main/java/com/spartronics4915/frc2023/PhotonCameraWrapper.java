@@ -67,8 +67,8 @@ import org.photonvision.PhotonCamera;
          // ... Add other cameras here
  
          // Assemble the list of cameras & mount locations
-         var camList = new ArrayList<Pair<PhotonCamera, Transform3d>>();
-         camList.add(new Pair<PhotonCamera, Transform3d>(photonCamera, VisionConstants.robotToCam));
+        // var camList = new ArrayList<Pair<PhotonCamera, Transform3d>>();
+        // camList.add(new Pair<PhotonCamera, Transform3d>(photonCamera, VisionConstants.robotToCam));
  
          robotPoseEstimator =
                  new PhotonPoseEstimator(atfl, PoseStrategy.LOWEST_AMBIGUITY, photonCamera, VisionConstants.robotToCam);
