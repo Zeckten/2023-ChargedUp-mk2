@@ -43,7 +43,8 @@ public class RobotContainer {
     
     private final Command mAutonomousCommand;
 	private final Command mTeleopCommand;
-    
+    private final Command mTeleopInitCommand;
+
     private final boolean useJoystick = true;
     // private final Command mTestingCommand;
     
@@ -66,11 +67,10 @@ public class RobotContainer {
             mSwerveCommands.new ResetCommand(),
             mAutos.new MoveForwardCommandFancy()
         );
-        mTeleopCommand = new SequentialCommandGroup(
-            mSwerveCommands.new ResetCommand(),    
-            mSwerveCommands.new TeleopCommand()
-        );
-        
+        mTeleopCommand =  
+            mSwerveCommands.new TeleopCommand();
+        mTeleopInitCommand = mSwerveCommands.new ResetCommand();
+
         // Configure the button bindings
         configureButtonBindings();
 
@@ -112,6 +112,17 @@ public class RobotContainer {
             public Command getTeleopCommand() {
                 return mTeleopCommand;
             }
+
+            void initTeleop() {
+
+                mTeleopInitCommand.schedule();
+                mSwerve.setDefaultCommand(mTeleopCommand);
+
+            }
+            public Command getTeleopInitCommand() {
+                return mTeleopInitCommand;
+            }
+
             
             public Command getTestingCommand() {
                 return new PrintPos(cameraWrapper);

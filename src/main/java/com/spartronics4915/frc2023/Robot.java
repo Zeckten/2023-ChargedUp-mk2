@@ -23,7 +23,7 @@ public class Robot extends TimedRobot {
     private RobotContainer mRobotContainer;
 
     private Command mAutonomousCommand;
-    private Command mTeleopCommand;
+    private Command mTeleopInitCommand;
     private Command mTestingCommand;
 
     /**
@@ -39,7 +39,6 @@ public class Robot extends TimedRobot {
         mRobotContainer = new RobotContainer();
 
         mAutonomousCommand = mRobotContainer.getAutonomousCommand();
-        mTeleopCommand = mRobotContainer.getTeleopCommand();
         mTestingCommand = mRobotContainer.getTestingCommand();
 
         mRobotContainer.initRobot();
@@ -105,9 +104,7 @@ public class Robot extends TimedRobot {
             mAutonomousCommand.cancel();
         }
         
-        if (mTeleopCommand != null) {
-            mTeleopCommand.schedule();
-        }
+        mRobotContainer.initTeleop();
     }
 
     /** This function is called periodically during operator control. */
