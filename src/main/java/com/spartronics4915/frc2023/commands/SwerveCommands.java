@@ -4,6 +4,7 @@ import com.spartronics4915.frc2023.PhotonCameraWrapper;
 import com.spartronics4915.frc2023.subsystems.Swerve;
 
 import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
@@ -222,7 +223,9 @@ public class SwerveCommands {
             PhotonPipelineResult result = cameraWrapper.photonCamera.getLatestResult();
             if (result.hasTargets()) {
                 var yaw = mSwerve.getYaw();
-                Rotation2d newYaw = yaw.plus(Rotation2d.fromDegrees(result.getBestTarget().getYaw()));
+                double targetYaw = result.getBestTarget().getYaw();
+                SmartDashboard.putNumber("Tag Yaw", targetYaw);
+                Rotation2d newYaw = yaw.minus(Rotation2d.fromDegrees(targetYaw));
                 var newCommand = new RotateToYaw(newYaw);
                 newCommand.schedule();
             }
@@ -246,8 +249,8 @@ public class SwerveCommands {
 
         public RotateToYaw(Rotation2d destinationYaw) {
             pid = new ProfiledPIDController(kP, 0, 0, new TrapezoidProfile.Constraints(
-                kMaxSpeedDegreesSec,
-                Double.POSITIVE_INFINITY
+                kMaxAngularSpeed,
+                0.1
             ));
             pid.setTolerance(mYawToleranceDegrees, mAngularVelToleranceDegreesSec);
 
