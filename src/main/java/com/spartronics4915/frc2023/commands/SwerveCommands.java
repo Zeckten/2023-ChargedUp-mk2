@@ -37,6 +37,23 @@ public class SwerveCommands {
         mSwerve = swerve;
     }
 
+    public class ResetCommand extends InstantCommand {
+        public ResetCommand() {
+            addRequirements(mSwerve);
+        }
+		
+		@Override
+		public void initialize() {
+            System.out.println("****Reset called****");
+			super.initialize();
+			mSwerve.resetToAbsolute();
+            mSwerve.resetYaw();
+			mSwerve.resetOdometry(new Pose2d(0, 0, new Rotation2d(0))); // for odometry testing
+            mSwerve.stop();
+			mSwerve.alignModules();
+		}
+    }
+
     public class SetFieldRelative extends InstantCommand {
 		private boolean mFieldRelative;
 
@@ -87,21 +104,6 @@ public class SwerveCommands {
 		}
     }
 
-    public class ResetCommand extends InstantCommand {
-        public ResetCommand() {
-            addRequirements(mSwerve);
-        }
-		
-		@Override
-		public void initialize() {
-			super.initialize();
-			mSwerve.resetToAbsolute();
-            mSwerve.resetYaw();
-			mSwerve.resetOdometry(new Pose2d(0, 0, new Rotation2d(0))); // for odometry testing
-            mSwerve.stop();
-			mSwerve.alignModules();
-		}
-    }
 
     public class TeleopCommand extends CommandBase {
         public TeleopCommand() {
