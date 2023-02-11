@@ -36,7 +36,7 @@ public class Swerve extends SubsystemBase {
 	private final int mModuleCount;
     // private PhotonCamera mFrontCamera;
 
-    private boolean mIsFieldRelative = true;
+    private boolean mIsFieldRelative = false;
 
     public static Swerve mInstance;
 

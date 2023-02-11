@@ -67,8 +67,10 @@ public class RobotContainer {
             mSwerveCommands.new ResetCommand(),
             mAutos.new MoveForwardCommandFancy()
         );
-        mTeleopCommand =  
-            mSwerveCommands.new TeleopCommand();
+        mTeleopCommand =  new SequentialCommandGroup(
+            mSwerveCommands.new ResetCommand(),
+            mSwerveCommands.new TeleopCommand()
+        );
         mTeleopInitCommand = mSwerveCommands.new ResetCommand();
 
         // Configure the button bindings
@@ -96,8 +98,8 @@ public class RobotContainer {
                     .onTrue(mSwerveCommands.new ResetOdometry());
 
                     new JoystickButton(mController, kAimButton)
-                    .onTrue(mSwerveCommands.new RotateToTarget(cameraWrapper));
-                    // cameraWrapper.photonCamera.getLatestResult().getBestTarget().getYaw()
+                    // .onTrue(mSwerveCommands.new RotateToTarget(cameraWrapper));
+                    .onTrue(mSwerveCommands.new RotateToYaw(Rotation2d.fromDegrees(90)));
                 }
             }
             

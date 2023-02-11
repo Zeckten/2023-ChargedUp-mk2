@@ -105,7 +105,7 @@ public final class Constants {
             public static final int kDriveMotorID = 1;
             public static final int kAngleMotorID = 2;
             public static final int kEncoderID = 0;
-            public static final Rotation2d kAngleOffset = Rotation2d.fromRotations(0.538 + 0.5);
+            public static final Rotation2d kAngleOffset = Rotation2d.fromRotations(0.016);
             public static final SwerveModuleConstants kConstants = 
                 new SwerveModuleConstants(kDriveMotorID, kAngleMotorID, kEncoderID, kAngleOffset);
         }
@@ -114,7 +114,7 @@ public final class Constants {
             public static final int kDriveMotorID = 3;
             public static final int kAngleMotorID = 4;
             public static final int kEncoderID = 1;
-            public static final Rotation2d kAngleOffset = Rotation2d.fromRotations(0.04 + 0.5);
+            public static final Rotation2d kAngleOffset = Rotation2d.fromRotations(0.511);
             public static final SwerveModuleConstants kConstants = 
                 new SwerveModuleConstants(kDriveMotorID, kAngleMotorID, kEncoderID, kAngleOffset);
         }
@@ -123,7 +123,7 @@ public final class Constants {
             public static final int kDriveMotorID = 5;
             public static final int kAngleMotorID = 6;
             public static final int kEncoderID = 2;
-            public static final Rotation2d kAngleOffset = Rotation2d.fromRotations(0.111 + 0.5);
+            public static final Rotation2d kAngleOffset = Rotation2d.fromRotations(0.278);
             public static final SwerveModuleConstants kConstants = 
                 new SwerveModuleConstants(kDriveMotorID, kAngleMotorID, kEncoderID, kAngleOffset);
         }
@@ -132,7 +132,7 @@ public final class Constants {
             public static final int kDriveMotorID = 7;
             public static final int kAngleMotorID = 8;
             public static final int kEncoderID = 3;
-            public static final Rotation2d kAngleOffset = Rotation2d.fromRotations(0.3 + 0.5);
+            public static final Rotation2d kAngleOffset = Rotation2d.fromRotations(0.802);
             public static final SwerveModuleConstants kConstants = 
                 new SwerveModuleConstants(kDriveMotorID, kAngleMotorID, kEncoderID, kAngleOffset);
         }
@@ -200,6 +200,6 @@ public final class Constants {
                                 0, 0,
                                 0)); // Cam mounted facing forward, half a meter forward of center, half a meter up
         // from center.
-        static final String cameraName = "Arducam_OV9281_USB_Camera";
+        static final String cameraName = "OV5647";
     }
 }

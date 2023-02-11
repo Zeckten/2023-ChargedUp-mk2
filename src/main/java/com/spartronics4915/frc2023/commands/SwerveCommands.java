@@ -218,13 +218,12 @@ public class SwerveCommands {
         private PhotonCameraWrapper cameraWrapper;
         private final double mYawToleranceDegrees = 10;
         private final double mAngularVelToleranceDegreesSec = 1;
-        private final double kP = 0.2;
         private final ProfiledPIDController pid;
 
         public RotateToTarget(PhotonCameraWrapper camera) {
             cameraWrapper = camera;
-            pid = new ProfiledPIDController(kP, 0, 0.01, new TrapezoidProfile.Constraints(
-                10,
+            pid = new ProfiledPIDController(0.02, 0, 0.01, new TrapezoidProfile.Constraints(
+                0.1,
                 kMaxAcceleration
             ));
             pid.setTolerance(mYawToleranceDegrees, mAngularVelToleranceDegreesSec);
@@ -277,31 +276,32 @@ public class SwerveCommands {
 
     public class RotateToYaw extends CommandBase {
 
-        private final double mYawToleranceDegrees = 10;
+        private final double mYawToleranceDegrees = 2;
         private final double mAngularVelToleranceDegreesSec = 1;
         private Rotation2d mDestinationYaw;
-        private final ProfiledPIDController pid;
+        private final PIDController pid;
 
         public RotateToYaw(Rotation2d destinationYaw) {
-            pid = new ProfiledPIDController(0.2, 0, 0.01, new TrapezoidProfile.Constraints(
-                10,
-                kMaxAcceleration
-            ));
+            pid = new PIDController(0.02, 0, 0.01);
             pid.setTolerance(mYawToleranceDegrees, mAngularVelToleranceDegreesSec);
             pid.enableContinuousInput(0, 360);
 
             addRequirements(mSwerve);
-            mDestinationYaw = destinationYaw;
+            mDestinationYaw = destinationYaw.times(-1);
         }
 
 //zack was here
         @Override
         public void execute() {
-            double d = pid.calculate(mSwerve.getYaw().getDegrees(), mDestinationYaw.getDegrees());
-            //System.out.println(d);
+            double goal = mDestinationYaw.getDegrees();
+            double yaw = mSwerve.getYaw().getDegrees();
+            double d = pid.calculate(yaw, goal);
+            SmartDashboard.putNumber("Yaw", yaw);
+            SmartDashboard.putNumber("Goal", goal);
+            SmartDashboard.putNumber("Theta", d);
             mSwerve.drive(
                 new Translation2d(),
-                -d,
+                d,
                 true
             );
         }
@@ -309,8 +309,8 @@ public class SwerveCommands {
         @Override
         public boolean isFinished() {
             boolean positionFine = (Math.abs(pid.getPositionError()) < pid.getPositionTolerance());
-            boolean velocityFine = (Math.abs(pid.getVelocityError()) < pid.getVelocityTolerance());
-            Boolean finished = positionFine && velocityFine;
+            // boolean velocityFine = (Math.abs(pid.getVelocityError()) < pid.getVelocityTolerance());
+            Boolean finished = positionFine;
             if (finished) {
                 System.out.println("done");
             }
