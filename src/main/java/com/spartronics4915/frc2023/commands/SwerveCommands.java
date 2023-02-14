@@ -279,17 +279,22 @@ public class SwerveCommands {
         private final double mYawToleranceDegrees = 2;
         private final double mAngularVelToleranceDegreesSec = 1;
         private Rotation2d mDestinationYaw;
-        private final PIDController pid;
+        private final ProfiledPIDController pid;
 
         public RotateToYaw(Rotation2d destinationYaw) {
-            pid = new PIDController(0.02, 0, 0.01);
+            pid = new ProfiledPIDController(0.02, 0, 0, 
+            new TrapezoidProfile.Constraints(4, 1.0));
             pid.setTolerance(mYawToleranceDegrees, mAngularVelToleranceDegreesSec);
-            pid.enableContinuousInput(0, 360);
-
+            pid.enableContinuousInput(-180, 180);
+            
             addRequirements(mSwerve);
             mDestinationYaw = destinationYaw.times(-1);
         }
 
+        @Override
+        public void initialize() {
+            //pid.reset(mSwerve.getYaw().getDegrees());
+        }
 //zack was here
         @Override
         public void execute() {

@@ -68,7 +68,7 @@ public class RobotContainer {
             mAutos.new MoveForwardCommandFancy()
         );
         mTeleopCommand =  new SequentialCommandGroup(
-            mSwerveCommands.new ResetCommand(),
+            //mSwerveCommands.new ResetCommand(),
             mSwerveCommands.new TeleopCommand()
         );
         mTeleopInitCommand = mSwerveCommands.new ResetCommand();
