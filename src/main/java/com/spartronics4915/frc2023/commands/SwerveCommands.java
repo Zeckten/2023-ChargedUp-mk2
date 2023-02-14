@@ -214,14 +214,12 @@ public class SwerveCommands {
         }
     }
 
-    public class RotateToTarget extends CommandBase {
-        private PhotonCameraWrapper cameraWrapper;
+    public class RotateToTarget extends CommandBase {;
         private final double mYawToleranceDegrees = 10;
         private final double mAngularVelToleranceDegreesSec = 1;
         private final ProfiledPIDController pid;
 
-        public RotateToTarget(PhotonCameraWrapper camera) {
-            cameraWrapper = camera;
+        public RotateToTarget() {
             pid = new ProfiledPIDController(0.02, 0, 0.01, new TrapezoidProfile.Constraints(
                 0.1,
                 kMaxAcceleration
@@ -250,7 +248,7 @@ public class SwerveCommands {
 
         @Override
         public void execute() {
-            PhotonPipelineResult result = cameraWrapper.photonCamera.getLatestResult();
+            PhotonPipelineResult result = Swerve.mCameraWrapper.photonCamera.getLatestResult();
             if (result.hasTargets()) {
                 double tagYaw = result.getBestTarget().getYaw();
                 double d = pid.calculate(tagYaw, 0);

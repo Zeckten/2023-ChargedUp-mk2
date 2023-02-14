@@ -3,6 +3,7 @@ package com.spartronics4915.frc2023.subsystems;
 // import org.photonvision.PhotonCamera;
 
 import com.kauailabs.navx.frc.AHRS;
+import com.spartronics4915.frc2023.PhotonCameraWrapper;
 
 import edu.wpi.first.math.MatBuilder;
 import edu.wpi.first.math.Nat;
@@ -34,9 +35,10 @@ public class Swerve extends SubsystemBase {
 
     private AHRS mNavX;
 	private final int mModuleCount;
-    // private PhotonCamera mFrontCamera;
+    
+    public static PhotonCameraWrapper mCameraWrapper;
 
-    private boolean mIsFieldRelative = false;
+    private boolean mIsFieldRelative = true;
 
     public static Swerve mInstance;
 
@@ -51,6 +53,7 @@ public class Swerve extends SubsystemBase {
         mNavX = new AHRS();
         mNavX.reset();
 
+        mCameraWrapper = new PhotonCameraWrapper();
         // mFrontCamera = new PhotonCamera(NetworkTableInstance.getDefault(), kFrontCameraName);
 
         mModules = new SwerveModule[] {
