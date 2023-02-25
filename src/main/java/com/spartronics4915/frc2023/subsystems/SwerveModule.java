@@ -48,11 +48,7 @@ public class SwerveModule {
 	}
 
     private final int mModuleNumber;
-<<<<<<< HEAD
-    private Rotation2d mAbsoluteOffset;
-=======
     private final Rotation2d mAbsoluteOffset;
->>>>>>> upstream/drivetrain-mk2
     private double mLastAngle;
 
     private final CANSparkMax mDriveMotor;
@@ -60,11 +56,7 @@ public class SwerveModule {
 
     private RelativeEncoder mDriveEncoder;
     private RelativeEncoder mIntegratedAngleEncoder;
-<<<<<<< HEAD
-    private AnalogEncoder mAngleEncoder;
-=======
     private AbsoluteEncoder mAngleEncoder;
->>>>>>> upstream/drivetrain-mk2
 
     private final SparkMaxPIDController mDriveController;
     private final SparkMaxPIDController mAngleController;
@@ -73,13 +65,7 @@ public class SwerveModule {
 
     private final SimpleMotorFeedforward mFeedforward = new SimpleMotorFeedforward(Drive.kS, Drive.kV, Drive.kA);
 
-<<<<<<< HEAD
-    public SwerveModule(int moduleNumber, int driveMotorID, int angleMotorID, int encoderID, Rotation2d absoluteOffset) {
-        System.out.println(moduleNumber + ", " + driveMotorID + ", " + angleMotorID + ", " + encoderID + ", " + absoluteOffset.getRadians());
-        
-=======
     public SwerveModule(int moduleNumber, int driveMotorID, int angleMotorID, int encoderID, double absoluteOffsetRadians) {
->>>>>>> upstream/drivetrain-mk2
         mModuleNumber = moduleNumber;
 
         mAbsoluteOffset = Rotation2d.fromRadians(absoluteOffsetRadians);
@@ -94,14 +80,10 @@ public class SwerveModule {
         mAngleController = mAngleMotor.getPIDController();
         configureAngleMotor();
 
-<<<<<<< HEAD
-        mAngleEncoder = new AnalogEncoder(new AnalogInput(encoderID));
-=======
 
         mAngleEncoder = kAbsoluteEncoderConstructor.apply(encoderID);
 
         resetToAbsolute();
->>>>>>> upstream/drivetrain-mk2
 
         mDesiredState = new SwerveModuleState();
 
@@ -172,20 +154,6 @@ public class SwerveModule {
     }
 
     public void resetToAbsolute() {
-<<<<<<< HEAD
-        Rotation2d encoderAngle = getShiftedAbsoluteEncoderRotation();
-        System.out.println(mModuleNumber + " " + getAbsoluteEncoderValue() + " " + encoderAngle.getRadians());
-        mIntegratedAngleEncoder.setPosition(encoderAngle.getRadians());
-    }
-
-    public double getAbsoluteEncoderValue() {
-        return 1.0 - mAngleEncoder.getAbsolutePosition();
-    }
-
-    public Rotation2d getShiftedAbsoluteEncoderRotation() {
-        return Rotation2d.fromRotations(getAbsoluteEncoderValue()).minus(
-            mAbsoluteOffset);
-=======
 		mIntegratedAngleEncoder.setPosition(getShiftedAbsoluteEncoderRotation().getRadians());
     }
 
@@ -195,7 +163,6 @@ public class SwerveModule {
 
     public Rotation2d getAbsoluteEncoderRotation() {
         return Rotation2d.fromDegrees(getAbsoluteEncoderValue());
->>>>>>> upstream/drivetrain-mk2
     }
 
     public Rotation2d getShiftedAbsoluteEncoderRotation() {
@@ -236,13 +203,8 @@ public class SwerveModule {
         mAngleController.setI(Angle.kI);
         mAngleController.setD(Angle.kD);
         mAngleController.setFF(Angle.kFF);
-<<<<<<< HEAD
-        mAngleController.setPositionPIDWrappingMinInput(-Math.PI);
-        mAngleController.setPositionPIDWrappingMaxInput(Math.PI);
-=======
         mAngleController.setPositionPIDWrappingMaxInput(Math.PI);
         mAngleController.setPositionPIDWrappingMinInput(-Math.PI);
->>>>>>> upstream/drivetrain-mk2
         mAngleController.setPositionPIDWrappingEnabled(true);
         mAngleMotor.enableVoltageCompensation(kVoltageCompensation);
         mAngleMotor.burnFlash();
