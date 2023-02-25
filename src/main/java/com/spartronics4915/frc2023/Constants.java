@@ -188,7 +188,7 @@ public final class Constants {
     }
 
     public static final class FieldConstants {
-        static final double length = Units.feetToMeters(54);
+        static final double length = Units.feetToMeters(54); 
         static final double width = Units.feetToMeters(27);
     }
 

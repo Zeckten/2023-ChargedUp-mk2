@@ -38,6 +38,8 @@ public class SwerveModule {
     private SimpleMotorFeedforward mFeedforward = new SimpleMotorFeedforward(Drive.kS, Drive.kV, Drive.kA);
 
     public SwerveModule(int moduleNumber, int driveMotorID, int angleMotorID, int encoderID, Rotation2d absoluteOffset) {
+        System.out.println(moduleNumber + ", " + driveMotorID + ", " + angleMotorID + ", " + encoderID + ", " + absoluteOffset.getRadians());
+        
         mModuleNumber = moduleNumber;
 
         mAbsoluteOffset = absoluteOffset;
