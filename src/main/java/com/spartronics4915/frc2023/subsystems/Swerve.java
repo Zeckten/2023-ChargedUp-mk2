@@ -1,8 +1,12 @@
 package com.spartronics4915.frc2023.subsystems;
 
+import com.ctre.phoenix.sensors.BasePigeon;
+
 // import org.photonvision.PhotonCamera;
 
-import com.kauailabs.navx.frc.AHRS;
+import com.ctre.phoenix.sensors.Pigeon2;
+import com.ctre.phoenix.sensors.PigeonIMU;
+import com.ctre.phoenix.sensors.PigeonIMUConfiguration;
 import com.spartronics4915.frc2023.PhotonCameraWrapper;
 
 import edu.wpi.first.math.MatBuilder;
@@ -33,14 +37,19 @@ public class Swerve extends SubsystemBase {
 
     private SwerveModule[] mModules;
 
-    private AHRS mNavX;
+    private BasePigeon mIMU;
+    private Rotation2d mLastPitch;
+    private Rotation2d mLastLastPitch;
+
 	private final int mModuleCount;
     
     public static PhotonCameraWrapper mCameraWrapper;
 
     private boolean mIsFieldRelative = true;
 
-    public static Swerve mInstance;
+    private static final boolean useCamera = false;
+
+    private static Swerve mInstance = null;
 
     public static Swerve getInstance() {
         if (mInstance == null) {
@@ -50,11 +59,13 @@ public class Swerve extends SubsystemBase {
     }
 
     private Swerve() {
-        mNavX = new AHRS();
-        mNavX.reset();
+		mIMU = kPigeonConstructor.apply(kPigeonID);
+		configurePigeon(mIMU);
 
+        // if (useCamera) {
+        //     mFrontCamera = new PhotonCamera(NetworkTableInstance.getDefault(), kFrontCameraName);
+        // }
         mCameraWrapper = new PhotonCameraWrapper();
-        // mFrontCamera = new PhotonCamera(NetworkTableInstance.getDefault(), kFrontCameraName);
 
         mModules = new SwerveModule[] {
             new SwerveModule(0, Module0.kConstants),
@@ -77,42 +88,68 @@ public class Swerve extends SubsystemBase {
         );
     }
 
+    private void configurePigeon(BasePigeon pigeon) {
+		if (mIMU instanceof Pigeon2) {
+			((Pigeon2)pigeon).configMountPose(
+				kPigeonMountPoseYaw,
+				kPigeonMountPosePitch,
+				kPigeonMountPoseRoll
+			);
+		}
+    }
+
 	public int getModuleCount() {
 		return mModuleCount;
 	}
 
+    /**
+     * This overload should only be used for controller input.
+     * @param translation
+     * @param rotation
+     * @param isOpenLoop
+     */
     public void drive(Translation2d translation, double rotation, boolean isOpenLoop) {
-        ChassisSpeeds chassisSpeeds;
+        ChassisSpeeds chassisSpeeds = new ChassisSpeeds(translation.getX(), translation.getY(), rotation);
         SmartDashboard.putBoolean("field relative", mIsFieldRelative);
-        if (mIsFieldRelative) {
-            chassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(
-                translation.getX(),
-                translation.getY(),
-                rotation,
-                getYaw()
-            );
-        } else {
-            chassisSpeeds = new ChassisSpeeds(
-                translation.getX(),
-                translation.getY(),
-                rotation
-            );
+
+        drive(chassisSpeeds, isOpenLoop);
+    }
+
+    /**
+     * Uses subsystem's current field relative setting
+     * @param chassisSpeeds
+     * @param isOpenLoop
+     */
+    public void drive(ChassisSpeeds chassisSpeeds, boolean isOpenLoop) {
+        drive(chassisSpeeds, mIsFieldRelative, isOpenLoop);
+    }
+
+    public void drive(ChassisSpeeds chassisSpeeds, boolean fieldRelative, boolean isOpenLoop) {
+        if (fieldRelative) {
+            chassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(chassisSpeeds, getYaw());
         }
 
         SwerveModuleState[] moduleStates = kKinematics.toSwerveModuleStates(chassisSpeeds);
-        
         SwerveDriveKinematics.desaturateWheelSpeeds(moduleStates, kMaxSpeed);
+        setModuleStates(moduleStates, isOpenLoop);
+    }
+
+    public void setModuleStates(SwerveModuleState[] desiredStates, boolean isOpenLoop) {
+        SwerveDriveKinematics.desaturateWheelSpeeds(desiredStates, kMaxSpeed);
 
         for (SwerveModule mod : mModules) {
-            mod.setDesiredState(moduleStates[mod.getModuleNumber()], isOpenLoop);
+            mod.setDesiredState(desiredStates[mod.getModuleNumber()], isOpenLoop);
         }
     }
 
     public void setModuleStates(SwerveModuleState[] desiredStates) {
-        SwerveDriveKinematics.desaturateWheelSpeeds(desiredStates, kMaxSpeed);
+        setModuleStates(desiredStates, true);
+    }
 
+    public void setModuleStates(SwerveModuleState desiredState) {
         for (SwerveModule mod : mModules) {
-            mod.setDesiredState(desiredStates[mod.getModuleNumber()], true);
+            mod.setDesiredState(
+                desiredState, true);
         }
     }
 
@@ -139,16 +176,36 @@ public class Swerve extends SubsystemBase {
         return mIsFieldRelative;
     }
 
+    public BasePigeon getIMU() {
+        return mIMU;
+    }
+
     public Pose2d getPose() {
         return mPoseEstimator.getEstimatedPosition();
     }
 
     public Rotation2d getYaw() {
-        return Rotation2d.fromDegrees(-mNavX.getYaw());
+        return Rotation2d.fromDegrees(mIMU.getYaw());
+    }
+
+    public Rotation2d getPitch() {
+        return Rotation2d.fromDegrees(mIMU.getPitch());
+    }
+
+    public Rotation2d getRoll() {
+        return Rotation2d.fromDegrees(mIMU.getRoll());
+    }
+
+    public double getPitchOmega() {
+        return (mLastPitch.minus(mLastLastPitch)).getRadians() / 0.02;
+    }
+
+    public ChassisSpeeds getChassisSpeeds() {
+        return kKinematics.toChassisSpeeds(getStates());
     }
 
     public void resetYaw() {
-        mNavX.reset();
+        mIMU.setYaw(0);
     }
 
     public void resetOdometry(Pose2d pose) {
@@ -220,22 +277,25 @@ public class Swerve extends SubsystemBase {
 	};
 
 	private VisionMeasurement getVisionMeasurement() {
+        // if (!useCamera) {
+        //     return null;
+        // }
         // var frontLatestResult = mFrontCamera.getLatestResult();
         // if (frontLatestResult.hasTargets()) {
         //     double imageCaptureTime = (Timer.getFPGATimestamp() * 1000) - frontLatestResult.getLatencyMillis();
         //     var bestTarget = frontLatestResult.getBestTarget();
         //     int bestTargetID = bestTarget.getFiducialId();
-        //     Transform3d camToTargetTrans = bestTarget.getBestCameraToTarget();
-        //     Transform2d camToTargetTrans2d = new Transform2d(
-        //         camToTargetTrans.getTranslation().toTranslation2d(),
-        //         camToTargetTrans.getRotation().toRotation2d()
+        //     var camToTargetTransform3d = bestTarget.getBestCameraToTarget();
+        //     var camToTargetTransform2d = new Transform2d(
+        //         camToTargetTransform3d.getTranslation().toTranslation2d(),
+        //         camToTargetTransform3d.getRotation().toRotation2d()
         //     );
-        //     Pose2d camPose = kTagPoses[bestTargetID].transformBy(camToTargetTrans2d.inverse());
+        //     Pose2d camPose = kTagPoses[bestTargetID].transformBy(camToTargetTransform2d.inverse());
         //     SmartDashboard.putNumber("x to tag", camPose.getX());
         //     SmartDashboard.putNumber("y to tag", camPose.getY());
 		// 	return new VisionMeasurement(camPose.transformBy(kFrontCameraToRobot), imageCaptureTime);
 		// }
-		return null;
+        return null;
 	}
 
     public void updatePoseEstimator() {
@@ -255,5 +315,10 @@ public class Swerve extends SubsystemBase {
         SmartDashboard.putNumber("pose x", getPose().getX());
         SmartDashboard.putNumber("pose y", getPose().getY());
         SmartDashboard.putNumber("pose rotation degrees", getPose().getRotation().getDegrees());
+
+        SmartDashboard.putBoolean("field relative", mIsFieldRelative);
+
+        mLastLastPitch = mLastPitch;
+        mLastPitch = getPitch();
     }
 }

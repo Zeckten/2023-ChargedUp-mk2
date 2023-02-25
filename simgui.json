@@ -1,7 +1,22 @@
 {
   "NTProvider": {
     "types": {
-      "/FMSInfo": "FMSInfo"
+      "/FMSInfo": "FMSInfo",
+      "/Shuffleboard/Swerve/Chassis/Pigeon 2 [9]": "Gyro",
+      "/Shuffleboard/Swerve/Orientation/Reset to Absolute": "Command",
+      "/Shuffleboard/Swerve/Orientation/Rotate 45": "Command"
+    }
+  },
+  "NetworkTables": {
+    "transitory": {
+      "Shuffleboard": {
+        "Swerve": {
+          "Chassis": {
+            "open": true
+          },
+          "open": true
+        }
+      }
     }
   }
 }

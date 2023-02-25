@@ -17,32 +17,72 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import static com.spartronics4915.frc2023.Constants.Swerve.*;
 
 import com.ctre.phoenix.sensors.CANCoder;
+import com.ctre.phoenix.sensors.WPI_CANCoder;
 
 public class SwerveModule {
+	public interface AbsoluteEncoder {
+		// degrees
+		public double getAbsolutePosition();
+	}
+
+	public static class AbsoluteCANCoder implements AbsoluteEncoder {
+		private final CANCoder mCANCoder;
+		public AbsoluteCANCoder(int id) {
+			mCANCoder = new CANCoder(id);
+		}
+
+		public double getAbsolutePosition() {
+			return mCANCoder.getAbsolutePosition();
+		}
+	}
+
+	public static class AbsoluteAnalogEncoder implements AbsoluteEncoder {
+		private final AnalogEncoder mAnalogEncoder;
+		public AbsoluteAnalogEncoder(int id) {
+			mAnalogEncoder = new AnalogEncoder(new AnalogInput(id));
+		}
+
+		public double getAbsolutePosition() {
+			return 360 * (1.0 - mAnalogEncoder.getAbsolutePosition());
+		}
+	}
+
     private final int mModuleNumber;
+<<<<<<< HEAD
     private Rotation2d mAbsoluteOffset;
+=======
+    private final Rotation2d mAbsoluteOffset;
+>>>>>>> upstream/drivetrain-mk2
     private double mLastAngle;
 
-    private CANSparkMax mDriveMotor;
-    private CANSparkMax mAngleMotor;
+    private final CANSparkMax mDriveMotor;
+    private final CANSparkMax mAngleMotor;
 
     private RelativeEncoder mDriveEncoder;
     private RelativeEncoder mIntegratedAngleEncoder;
+<<<<<<< HEAD
     private AnalogEncoder mAngleEncoder;
+=======
+    private AbsoluteEncoder mAngleEncoder;
+>>>>>>> upstream/drivetrain-mk2
 
     private final SparkMaxPIDController mDriveController;
     private final SparkMaxPIDController mAngleController;
 
     private SwerveModuleState mDesiredState;
 
-    private SimpleMotorFeedforward mFeedforward = new SimpleMotorFeedforward(Drive.kS, Drive.kV, Drive.kA);
+    private final SimpleMotorFeedforward mFeedforward = new SimpleMotorFeedforward(Drive.kS, Drive.kV, Drive.kA);
 
+<<<<<<< HEAD
     public SwerveModule(int moduleNumber, int driveMotorID, int angleMotorID, int encoderID, Rotation2d absoluteOffset) {
         System.out.println(moduleNumber + ", " + driveMotorID + ", " + angleMotorID + ", " + encoderID + ", " + absoluteOffset.getRadians());
         
+=======
+    public SwerveModule(int moduleNumber, int driveMotorID, int angleMotorID, int encoderID, double absoluteOffsetRadians) {
+>>>>>>> upstream/drivetrain-mk2
         mModuleNumber = moduleNumber;
 
-        mAbsoluteOffset = absoluteOffset;
+        mAbsoluteOffset = Rotation2d.fromRadians(absoluteOffsetRadians);
         
         mDriveMotor = kMotorConstructor.apply(driveMotorID);
         mDriveEncoder = mDriveMotor.getEncoder();
@@ -54,7 +94,14 @@ public class SwerveModule {
         mAngleController = mAngleMotor.getPIDController();
         configureAngleMotor();
 
+<<<<<<< HEAD
         mAngleEncoder = new AnalogEncoder(new AnalogInput(encoderID));
+=======
+
+        mAngleEncoder = kAbsoluteEncoderConstructor.apply(encoderID);
+
+        resetToAbsolute();
+>>>>>>> upstream/drivetrain-mk2
 
         mDesiredState = new SwerveModuleState();
 
@@ -72,7 +119,7 @@ public class SwerveModule {
         var currentState = this.getState();
         var newState = new SwerveModuleState(currentState.speedMetersPerSecond, newAngle);
 
-        this.setDesiredState(newState, isOpenLoop, false);
+        this.setDesiredState(newState, isOpenLoop, true);
     }
 
     public void setDesiredState(SwerveModuleState desiredState, boolean isOpenLoop, boolean suppressTurningAtLowSpeed) {
@@ -90,12 +137,12 @@ public class SwerveModule {
             );
         }
 
-        double angle = (suppressTurningAtLowSpeed && Math.abs(desiredState.speedMetersPerSecond) < kMaxSpeed * 0.01) ?
-            mLastAngle :
-            desiredState.angle.getRadians();
+		double angle = (suppressTurningAtLowSpeed && Math.abs(desiredState.speedMetersPerSecond) < kMaxSpeed * 0.01) ?
+			mLastAngle :
+			desiredState.angle.getRadians();
 
-        mAngleController.setReference(angle, ControlType.kPosition);
-        mLastAngle = angle;
+		mAngleController.setReference(angle, ControlType.kPosition);
+		mLastAngle = angle;
     }
 
     public void setDesiredState(SwerveModuleState desiredState, boolean isOpenLoop) {
@@ -125,6 +172,7 @@ public class SwerveModule {
     }
 
     public void resetToAbsolute() {
+<<<<<<< HEAD
         Rotation2d encoderAngle = getShiftedAbsoluteEncoderRotation();
         System.out.println(mModuleNumber + " " + getAbsoluteEncoderValue() + " " + encoderAngle.getRadians());
         mIntegratedAngleEncoder.setPosition(encoderAngle.getRadians());
@@ -137,18 +185,33 @@ public class SwerveModule {
     public Rotation2d getShiftedAbsoluteEncoderRotation() {
         return Rotation2d.fromRotations(getAbsoluteEncoderValue()).minus(
             mAbsoluteOffset);
+=======
+		mIntegratedAngleEncoder.setPosition(getShiftedAbsoluteEncoderRotation().getRadians());
     }
 
-    public double getShiftedAbsoluteEncoderRotations() {
-        return getShiftedAbsoluteEncoderRotation().getRotations();
+    public double getAbsoluteEncoderValue() {
+        return mAngleEncoder.getAbsolutePosition();
+    }
+
+    public Rotation2d getAbsoluteEncoderRotation() {
+        return Rotation2d.fromDegrees(getAbsoluteEncoderValue());
+>>>>>>> upstream/drivetrain-mk2
+    }
+
+    public Rotation2d getShiftedAbsoluteEncoderRotation() {
+        return getAbsoluteEncoderRotation().minus(mAbsoluteOffset);
     }
 
     public double getRelativeEncoderValue() {
         return mIntegratedAngleEncoder.getPosition();
     }
 
+    public Rotation2d getRelativeEncoderRotation() {
+        return Rotation2d.fromRadians(getRelativeEncoderValue());
+    }
+
     private void configureDriveMotor() {
-        mDriveMotor.restoreFactoryDefaults(); // ?
+        mDriveMotor.restoreFactoryDefaults();
         mDriveMotor.setSmartCurrentLimit(Drive.kContinuousCurrentLimit);
         mDriveMotor.setInverted(kDriveMotorsAreInverted);
         mDriveMotor.setIdleMode(kDriveIdleMode);
@@ -167,13 +230,19 @@ public class SwerveModule {
         mAngleMotor.restoreFactoryDefaults();
         mAngleMotor.setSmartCurrentLimit(Angle.kContinuousCurrentLimit);
         mAngleMotor.setIdleMode(kAngleIdleMode);
+        mAngleMotor.setInverted(Angle.kInverted);
         mIntegratedAngleEncoder.setPositionConversionFactor(Angle.kPositionConversionFactor);
         mAngleController.setP(Angle.kP);
         mAngleController.setI(Angle.kI);
         mAngleController.setD(Angle.kD);
         mAngleController.setFF(Angle.kFF);
+<<<<<<< HEAD
         mAngleController.setPositionPIDWrappingMinInput(-Math.PI);
         mAngleController.setPositionPIDWrappingMaxInput(Math.PI);
+=======
+        mAngleController.setPositionPIDWrappingMaxInput(Math.PI);
+        mAngleController.setPositionPIDWrappingMinInput(-Math.PI);
+>>>>>>> upstream/drivetrain-mk2
         mAngleController.setPositionPIDWrappingEnabled(true);
         mAngleMotor.enableVoltageCompensation(kVoltageCompensation);
         mAngleMotor.burnFlash();
@@ -191,7 +260,7 @@ public class SwerveModule {
         return new SwerveModulePosition(drivePosition, angle);
     }
 
-    public void zeroPIDP(){
+    public void zeroPIDP() {
         mAngleController.setP(0);
     }
 }

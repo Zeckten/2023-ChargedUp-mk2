@@ -8,15 +8,18 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
+import edu.wpi.first.math.util.Units;
 
 import static com.spartronics4915.frc2023.Constants.Swerve.*;
 
@@ -28,32 +31,32 @@ import org.photonvision.targeting.PhotonPipelineResult;
 import static com.spartronics4915.frc2023.Constants.OI.*;
 
 public class SwerveCommands {
-    private final XboxController mController;
+    private final CommandXboxController mDriverController;
 
     private final Swerve mSwerve;
-    private boolean mIsSlowMode = false;
+    private boolean mIsSprintMode = false;
 
-    public SwerveCommands(XboxController controller, Swerve swerve) {
-        mController = controller;
-        mSwerve = swerve;
+    public SwerveCommands(CommandXboxController controller) {
+        mDriverController = controller;
+        mSwerve = Swerve.getInstance();
     }
 
-    public class ResetCommand extends InstantCommand {
-        public ResetCommand() {
-            addRequirements(mSwerve);
-        }
+    // public class ResetCommand extends InstantCommand {
+    //     public ResetCommand() {
+    //         addRequirements(mSwerve);
+    //     }
 		
-		@Override
-		public void initialize() {
-            System.out.println("****Reset called****");
-			super.initialize();
-			mSwerve.resetToAbsolute();
-            mSwerve.resetYaw();
-			mSwerve.resetOdometry(new Pose2d(0, 0, new Rotation2d(0))); // for odometry testing
-            mSwerve.stop();
-			mSwerve.alignModules();
-		}
-    }
+	// 	@Override
+	// 	public void initialize() {
+    //         System.out.println("****Reset called****");
+	// 		super.initialize();
+	// 		mSwerve.resetToAbsolute();
+    //         mSwerve.resetYaw();
+	// 		mSwerve.resetOdometry(new Pose2d(0, 0, new Rotation2d(0))); // for odometry testing
+    //         mSwerve.stop();
+	// 		mSwerve.alignModules();
+	// 	}
+    // }
 
     public class SetFieldRelative extends InstantCommand {
 		private boolean mFieldRelative;
@@ -93,6 +96,9 @@ public class SwerveCommands {
 		}
     }
 
+    /**
+     * Mainly for debugging, probably shouldn't be used during a match
+     */
     public class ResetOdometry extends InstantCommand {
         public ResetOdometry() {
 
@@ -105,6 +111,40 @@ public class SwerveCommands {
 		}
     }
 
+    /**
+     * Mainly used to initialize robot
+     */
+    public class ResetCommand extends InstantCommand {
+        public ResetCommand() {
+            addRequirements(mSwerve);
+        }
+		
+		@Override
+		public void initialize() {
+			super.initialize();
+			mSwerve.resetToAbsolute();
+            mSwerve.resetYaw();
+			mSwerve.resetOdometry(new Pose2d(0, 0, new Rotation2d(0))); // for odometry testing
+            mSwerve.stop();
+			mSwerve.alignModules();
+		}
+    }
+
+    public class EnableSprintMode extends InstantCommand {
+        public EnableSprintMode() {
+            super(
+                () -> mIsSprintMode = true
+            );
+        }
+    }
+
+    public class DisableSprintMode extends InstantCommand {
+        public DisableSprintMode() {
+            super(
+                () -> mIsSprintMode = false
+            );
+        }
+    }
 
     public class TeleopCommand extends CommandBase {
         public TeleopCommand() {
@@ -116,12 +156,10 @@ public class SwerveCommands {
 
         @Override
         public void execute() {
-            // System.out.println("teleop");
-            double x1 = mController.getLeftX();
-            double y1 = mController.getLeftY();
-            double x2 = mController.getRightX();
-            
-            // System.out.println("x1,y1,x2:" + x1 + "," + y1 + "," + x2);
+            double x1 = mDriverController.getLeftX();
+            double y1 = mDriverController.getLeftY();
+            double x2 = mDriverController.getRightX();
+
             x1 = applyTransformations(x1);
             y1 = applyTransformations(y1);
             x2 = applyTransformations(x2);
@@ -131,13 +169,22 @@ public class SwerveCommands {
             double rotation = -x2 * kMaxAngularSpeed;
             // System.out.println("translation,rotation" + translation + "," + rotation);
 
-            if (Math.abs(mController.getRawAxis(kSlowModeAxis)) <= kTriggerDeadband) { // <= for slow mode default
+            if (!mIsSprintMode) {
                 translation = translation.times(kSlowModeSpeedMultiplier);
                 rotation *= kSlowModeAngularSpeedMultiplier;
             }
             
             // System.out.println("translation,rotation" + translation + "," + rotation);
             mSwerve.drive(translation, rotation, true);
+
+            // if (!mIsSprintMode) {
+            //     x1 *= kSlowModeSpeedMultiplier;
+            //     y1 *= kSlowModeSpeedMultiplier;
+            //     x2 *= kSlowModeAngularSpeedMultiplier;
+            // }
+
+            // ChassisSpeeds chassisSpeeds = new ChassisSpeeds(-y1 * kMaxSpeed, -x1 * kMaxSpeed, x2 * kMaxAngularSpeed);
+            // mSwerve.drive(chassisSpeeds, true);
         }
 
         @Override
@@ -149,43 +196,50 @@ public class SwerveCommands {
         }
     }
 
-    public class TestInitCommand extends CommandBase {
-        public TestInitCommand() {
+    public class Balance extends CommandBase {
+        private final PIDController mXVelocityPIDController;
+        private final PIDController mRotationPIDController;
+        
+        public Balance() {
             addRequirements(mSwerve);
+            mXVelocityPIDController = new PIDController(
+                BalanceConstants.XVelocityPID.kP,
+                BalanceConstants.XVelocityPID.kI,
+                BalanceConstants.XVelocityPID.kD
+            );
+            mRotationPIDController = new PIDController(
+                BalanceConstants.ThetaPID.kP,
+                BalanceConstants.ThetaPID.kI,
+                BalanceConstants.ThetaPID.kD
+            );
         }
 
         @Override
-        public void initialize() {}
+        public void initialize() {
+            mXVelocityPIDController.setSetpoint(0);
+            mRotationPIDController.setSetpoint(0);
+        }
 
         @Override
-        public void execute() {}
+        public void execute() {
+            // double 
+            
+            double vx = mXVelocityPIDController.calculate(mSwerve.getPitch().getRadians());
+            double omega = mRotationPIDController.calculate(mSwerve.getYaw().getRadians());
+
+            ChassisSpeeds chassisSpeeds = new ChassisSpeeds(vx, 0, omega);
+            
+            mSwerve.drive(chassisSpeeds, true, false);
+        }
 
         @Override
-        public void end(boolean interrupted) {}
+        public void end(boolean interrupted) {
+
+        }
 
         @Override
         public boolean isFinished() {
-            return true;
-        }
-    }
-
-    public class TestCommand extends CommandBase {
-        public TestCommand() {
-            addRequirements(mSwerve);
-        }
-
-        @Override
-        public void initialize() {}
-
-        @Override
-        public void execute() {}
-
-        @Override
-        public void end(boolean interrupted) {}
-
-        @Override
-        public boolean isFinished() {
-            return true;
+            return mXVelocityPIDController.atSetpoint() && Math.abs(mSwerve.getPitchOmega()) <= 0.1;
         }
     }
 
@@ -234,14 +288,14 @@ public class SwerveCommands {
         public void initialize() {
             PhotonPipelineResult result = Swerve.mCameraWrapper.photonCamera.getLatestResult();
             if (result.hasTargets()) {
-                // var yaw = mSwerve.getYaw();
+                var yaw = mSwerve.getYaw();
                 // System.out.println("Current Yaw: " + yaw.getDegrees());
                 // double targetYaw = result.getBestTarget().getYaw();
                 double targetYaw = result.getBestTarget().getYaw();
                 // System.out.println("Tag Yaw: " + targetYaw);
-                // Rotation2d newYaw = yaw.minus(Rotation2d.fromDegrees(targetYaw));
+                Rotation2d newYaw = yaw.minus(Rotation2d.fromDegrees(targetYaw));
                 // System.out.println("Goal Yaw: " + newYaw.getDegrees());
-                var newCommand = new RotateYaw(Rotation2d.fromDegrees(targetYaw));
+                var newCommand = new RotateToYaw(newYaw);
                 newCommand.schedule();
             }
         }
@@ -272,6 +326,32 @@ public class SwerveCommands {
             return finished;
         }
     }
+	public class RotateToYaw2 extends CommandBase {
+		private final double kYawTolerance = Units.degreesToRadians(2);
+		private final double kMaxAngularVelocity = Units.degreesToRadians(50);
+		private final Rotation2d mDestinationYaw;
+		private final double kP = 0.2;
+
+		public RotateToYaw2(Rotation2d destinationYaw) {
+			mDestinationYaw = destinationYaw;
+
+		}
+
+		private double getError() {
+			return mDestinationYaw.minus(Swerve.getInstance().getYaw()).getRadians();
+		}
+
+		@Override
+		public void execute() {
+			double omega = Math.min(getError() * kP, kMaxAngularVelocity);
+			Swerve.getInstance().drive(new ChassisSpeeds(0, 0, omega), true);
+		}
+
+		@Override
+		public boolean isFinished() {
+			return getError() < kYawTolerance;
+		}
+	}
 
     public class RotateToYaw extends CommandBase {
 

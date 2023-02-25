@@ -4,20 +4,31 @@
 
 package com.spartronics4915.frc2023;
 
+import com.spartronics4915.frc2023.commands.ArmCommands;
 import com.spartronics4915.frc2023.commands.Autos;
+import com.spartronics4915.frc2023.commands.ChargeStationCommands;
 import com.spartronics4915.frc2023.commands.DebugTeleopCommands;
+import com.spartronics4915.frc2023.commands.IntakeCommands;
 import com.spartronics4915.frc2023.commands.SwerveCommands;
 import com.spartronics4915.frc2023.commands.SwerveTrajectoryFollowerCommands;
+import com.spartronics4915.frc2023.commands.ChargeStationCommands.AutoChargeStationClimb.ClimbState;
 import com.spartronics4915.frc2023.commands.SwerveCommands.TeleopCommand;
+import com.spartronics4915.frc2023.subsystems.Arm;
+import com.spartronics4915.frc2023.subsystems.Intake;
 import com.spartronics4915.frc2023.subsystems.Swerve;
 import com.spartronics4915.frc2023.commands.PrintPos;
+import com.spartronics4915.frc2023.subsystems.Arm.ArmState;
+import com.spartronics4915.frc2023.subsystems.Intake.IntakeState;
 
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
+import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 
 import static com.spartronics4915.frc2023.Constants.OI.*;
 
@@ -31,13 +42,23 @@ import static com.spartronics4915.frc2023.Constants.OI.*;
 * subsystems, commands, and button mappings) should be declared here.
 */
 public class RobotContainer {
-    private final XboxController mController;
+    // private final XboxController mDriverController;
+    // private final XboxController mOperatorController;
+
+    private final CommandXboxController mDriverController;
+    private final CommandXboxController mOperatorController;
     
     private final SwerveTrajectoryFollowerCommands mSwerveTrajectoryFollowerCommands;
     
     // The robot's subsystems and commands are defined here...
     private final Swerve mSwerve;
     private final SwerveCommands mSwerveCommands;
+
+    // private final Arm mArm;
+    // private final ArmCommands mArmCommands;
+
+    // private final Intake mIntake;
+    // private final IntakeCommands mIntakeCommands;
     
     private final Autos mAutos;
     
@@ -48,20 +69,26 @@ public class RobotContainer {
     private final boolean useJoystick = true;
     // private final Command mTestingCommand;
     
-    private PhotonCameraWrapper cameraWrapper = new PhotonCameraWrapper();
-
     /**
     * The container for the robot. Contains subsystems, OI devices, and commands.
     */
     public RobotContainer() {
-        mController = useJoystick ? new XboxController(kControllerID) : null;
+        mDriverController = useJoystick ? new CommandXboxController(kDriverControllerID) : null;
+        mOperatorController = useJoystick ? new CommandXboxController(kOperatorControllerID) : null;
         
         mSwerve = Swerve.getInstance();
-        mSwerveCommands = new SwerveCommands(mController, mSwerve);
+        mSwerveCommands = new SwerveCommands(mDriverController);
+        mSwerve.setDefaultCommand(mSwerveCommands.new TeleopCommand());
         
-        mSwerveTrajectoryFollowerCommands = new SwerveTrajectoryFollowerCommands(mSwerve);
+        mSwerveTrajectoryFollowerCommands = new SwerveTrajectoryFollowerCommands();
+
+        // mArm = Arm.getInstance();
+        // mArmCommands = new ArmCommands(mArm);
+
+        // mIntake = Intake.getInstance();
+        // mIntakeCommands = new IntakeCommands(mIntake);
         
-        mAutos = new Autos(mSwerve, mSwerveTrajectoryFollowerCommands);
+        mAutos = new Autos(mSwerveTrajectoryFollowerCommands);
         
         mAutonomousCommand = new SequentialCommandGroup(
             mSwerveCommands.new ResetCommand(),
@@ -75,7 +102,6 @@ public class RobotContainer {
 
         // Configure the button bindings
         configureButtonBindings();
-
     }
     
     /**
@@ -88,18 +114,52 @@ public class RobotContainer {
             */
             private void configureButtonBindings() {
                 if (useJoystick) {
-                    new JoystickButton(mController, kToggleFieldRelativeButton)
-                    .onTrue(mSwerveCommands.new ToggleFieldRelative());
-                    
-                    new JoystickButton(mController, kResetYawButton)
-                    .onTrue(mSwerveCommands.new ResetYaw());
-                    
-                    new JoystickButton(mController, kResetOdometryButton)
-                    .onTrue(mSwerveCommands.new ResetOdometry());
+                    // DRIVER CONTROLS
+                    mDriverController.a()
+                        .onTrue(mSwerveCommands.new ToggleFieldRelative());
 
-                    new JoystickButton(mController, kAimButton)
-                    // .onTrue(mSwerveCommands.new RotateToTarget(cameraWrapper));
-                    .onTrue(mSwerveCommands.new RotateToYaw(Rotation2d.fromDegrees(90)));
+                    mDriverController.b()
+                        .onTrue(mSwerveCommands.new ResetYaw());
+
+                    mDriverController.y()
+                        .onTrue(mSwerveCommands.new ResetOdometry());
+
+                    mDriverController.rightTrigger(kTriggerDeadband)
+                        .onTrue(mSwerveCommands.new EnableSprintMode())
+                        .onFalse(mSwerveCommands.new DisableSprintMode());
+
+                    mDriverController.rightBumper()
+                        .whileTrue(new ChargeStationCommands.AutoChargeStationClimb());
+
+                    mDriverController.leftBumper()
+                        .whileTrue(new ChargeStationCommands.AutoChargeStationClimb(ClimbState.LEVEL_ROBOT_SETUP));
+
+                    // OPERATOR CONTROLS
+                    // mOperatorController.povUp()
+                    //     .onTrue(mArmCommands.new SetArmState(ArmState.GRAB_UPRIGHT));
+
+                    // mOperatorController.povDown()
+                    //     .onTrue(mArmCommands.new SetArmState(ArmState.GRAB_FALLEN));
+
+                    // mOperatorController.b()
+                    //     .onTrue(mArmCommands.new SetArmState(ArmState.RETRACTED));
+
+                    // mOperatorController.a()
+                    //     .onTrue(mArmCommands.new SetArmState(ArmState.LEVEL_1));
+
+                    // mOperatorController.x()
+                    //     .onTrue(mArmCommands.new SetArmState(ArmState.LEVEL_2));
+
+                    // mOperatorController.y()
+                    //     .onTrue(mArmCommands.new SetArmState(ArmState.LEVEL_3));
+
+                    // mOperatorController.rightTrigger(kTriggerDeadband)
+                    //     .onTrue(mIntakeCommands.new SetIntakeState(IntakeState.OUT))
+                    //     .onFalse(mIntakeCommands.new SetIntakeState(IntakeState.OFF));
+
+                    // mOperatorController.leftTrigger(kTriggerDeadband)
+                    //     .onTrue(mIntakeCommands.new SetIntakeState(IntakeState.IN))
+                    //     .onFalse(mIntakeCommands.new SetIntakeState(IntakeState.OFF));
                 }
             }
             
@@ -110,10 +170,6 @@ public class RobotContainer {
             */
             public Command getAutonomousCommand() {
                 return mAutonomousCommand;
-            }
-            
-            public Command getTeleopCommand() {
-                return mTeleopCommand;
             }
 
             void initTeleop() {
@@ -128,14 +184,14 @@ public class RobotContainer {
 
             
             public Command getTestingCommand() {
-                return new PrintPos(cameraWrapper);
+                return null;
             }
 
             public void initRobot() {
-                Command shuffleboard_update_command = new DebugTeleopCommands.ShuffleboardUpdateCommand(mSwerve,
-                mSwerveCommands);
+                Command shuffleboard_update_command = new DebugTeleopCommands.ShuffleboardUpdateCommand(mSwerveCommands);
                 shuffleboard_update_command.schedule();
 
                 mSwerve.resetToAbsolute();
+                mSwerve.setFieldRelative(true);
             }
 }
